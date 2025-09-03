@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Poupança Simplificada</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+            text-align: center;
+        }
+
+        input[type="number"]:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .tooltip {
+            font-size: 0.9em;
+            color: #777;
+            margin-top: 5px;
+            display: block;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #000000;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #AB2105;
+        }
+
+        #resultados {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            display: none;
+        }
+
+        #resultados h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+
+        #resultados p {
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .alert {
+            background-color: #f39c12;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+            margin-top: 20px;
+        }
+
+        .footer-note {
+            font-size: 0.8em;
+            color: #777;
+            margin-top: 10px;
+            padding: 10px 20px;
+            max-width: 600px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Quanto posso poupar?</h1>
+        
+        <div class="alert" id="alerta">Por favor, preencha a fatura mensal ou o consumo.</div>
+
+        <div class="form-group">
+            <label for="fatura">Fatura Mensal de Eletricidade (€)</label>
+            <input type="number" id="fatura" placeholder="Ex: 80">
+        </div>
+
+        <div class="form-group">
+            <label for="consumo">Consumo Mensal de Eletricidade (kWh)</label>
+            <input type="number" id="consumo" placeholder="Ex: 250">
+            <span class="tooltip">Opcional. Se preencher a fatura, este campo não é necessário.</span>
+        </div>
+
+        <div class="form-group">
+            <label for="tarifa">Tarifa de Eletricidade (€/kWh)</label>
+            <input type="number" id="tarifa" value="0.18" step="0.01">
+        </div>
+        
+        <button id="calcularBtn">Calcular</button>
+
+        <div id="resultados">
+            <h2>Resultados Estimados</h2>
+            <p id="poupancaDireta"></p>
+            <p id="poupancaLongaDuracao"></p>
+        </div>
+    </div>
+    
+    <div class="footer-note">
+        <p>
+            Estes valores são estimativas, não são levados em conta custos com impostos e taxas.
+            Estes resultados não são em nada vinculativos nem podem ser usados contra a BeON Castelo Branco.
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('calcularBtn').addEventListener('click', function() {
+            // Obter os valores dos inputs
+            const fatura = parseFloat(document.getElementById('fatura').value) || 0;
+            const consumo = parseFloat(document.getElementById('consumo').value) || 0;
+            const tarifa = parseFloat(document.getElementById('tarifa').value);
+
+            // Valores fixos
+            const taxaPoupanca = 0.35; // 35%
+            const inflacao = 0.03; // 3%
+
+            const alerta = document.getElementById('alerta');
+            const resultadosDiv = document.getElementById('resultados');
+
+            // Validação dos inputs essenciais
+            if ((fatura === 0 && consumo === 0) || !tarifa) {
+                alerta.style.display = 'block';
+                resultadosDiv.style.display = 'none';
+                return;
+            } else {
+                alerta.style.display = 'none';
+            }
+            
+            // Determinar o valor da fatura a partir do consumo, se necessário
+            let faturaMensal;
+            if (fatura > 0) {
+                faturaMensal = fatura;
+            } else {
+                faturaMensal = consumo * tarifa;
+            }
+
+            // Calcular a nova fatura mensal e a poupança anual
+            const novaFaturaMensal = faturaMensal * (1 - taxaPoupanca);
+            const poupancaAnualTotal = faturaMensal * 12 * taxaPoupanca;
+
+            // Calcular a poupança acumulada a longo prazo (com inflação)
+            let poupancaAcumulada = 0;
+            let poupanca5Anos = 0;
+            let poupanca10Anos = 0;
+
+            for (let ano = 1; ano <= 10; ano++) {
+                poupancaAcumulada += poupancaAnualTotal * Math.pow(1 + inflacao, ano);
+                if (ano === 5) {
+                    poupanca5Anos = poupancaAcumulada;
+                }
+                if (ano === 10) {
+                    poupanca10Anos = poupancaAcumulada;
+                }
+            }
+
+            // Exibir os resultados com a formatação correta
+            document.getElementById('poupancaDireta').innerHTML = `
+                Com a instalação de painéis solares, a sua nova fatura mensal estimada seria de <strong>${novaFaturaMensal.toFixed(2)} €</strong>.
+                <br><br>Isso representa uma poupança anual total de <strong>${poupancaAnualTotal.toFixed(2)} €</strong>.
+            `;
+            document.getElementById('poupancaLongaDuracao').innerHTML = `
+                <br>Projeção de poupança acumulada (com inflação da eletricidade 3% ano):<br>
+                Em 5 anos: <strong>${poupanca5Anos.toFixed(2)} €</strong><br>
+                Em 10 anos: <strong>${poupanca10Anos.toFixed(2)} €</strong>
+            `;
+
+            resultadosDiv.style.display = 'block';
+        });
+    </script>
+
+</body>
+</html>
